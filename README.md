@@ -8,6 +8,17 @@
 >
 > 本分支的界面与交互改动见 [REDESIGN.md](REDESIGN.md)。夸克名称与图标归其权利人所有，仓库中的官方图标仅用于标识这个非官方客户端；如你计划再分发，请自行评估商标使用。
 
+## 下载
+
+- [GitHub Releases](https://github.com/zyst221/quark-drive-redesign/releases)：当前版本 0.2.2。
+- Debian / Ubuntu / KDE neon：
+
+  ```bash
+  sudo apt install ./QuarkDrive_0.2.2_amd64.deb
+  ```
+
+- 其他发行版请按下方“构建”自行编译；校验值随每个 Release 的 `SHA256SUMS` 提供。
+
 ## 功能
 
 本分支新增：
