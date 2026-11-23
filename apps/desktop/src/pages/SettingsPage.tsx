@@ -260,14 +260,16 @@ export default function SettingsPage() {
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
           <SectionTitle icon={Info} title="关于" />
           <div className="mt-4 grid gap-3 text-[11px] sm:grid-cols-2">
-            <InfoRow label="版本" value="0.2.0" />
+            <InfoRow label="版本" value="0.2.2 · 重设计版" />
             <InfoRow label="协议" value="Quark PC API (Cookie)" />
             <InfoRow label="数据目录" value={dataDir || "—"} mono />
             <InfoRow label="凭据存储" value="本地文件 · 0600 权限" />
+            <InfoRow label="开源许可" value="MIT" />
+            <InfoRow label="界面" value="重设计 · 2026" />
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-[var(--panel-2)] p-3 text-[10px] leading-5 text-[var(--muted)]">
             <Cloud className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
-            本项目是第三方客户端，接口由夸克网页端提供，可能随官方更新而变化。请勿用于高频批量操作。
+            本项目是第三方客户端，接口由夸克网页端提供，可能随官方更新而变化。请勿用于高频批量操作。界面重设计基于 MIT 许可的开源项目 xingzhe11011/quark-drive，本构建为非官方修改版。
           </div>
         </section>
 

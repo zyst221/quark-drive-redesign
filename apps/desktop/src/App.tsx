@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { backend, subscribeEvents } from "./lib/backend";
+import { backend, isDesktop, subscribeEvents } from "./lib/backend";
 import { classifyBackendError } from "./lib/errors";
 import type { Account } from "./lib/types";
 import { useAppStore } from "./store";
@@ -31,6 +31,8 @@ export default function App() {
   const setSettings = useAppStore((state) => state.setSettings);
   const setDataDir = useAppStore((state) => state.setDataDir);
   const setTransfers = useAppStore((state) => state.setTransfers);
+  const mergeTransfers = useAppStore((state) => state.mergeTransfers);
+  const openTransfers = useAppStore((state) => state.openTransfers);
   const upsertTransfer = useAppStore((state) => state.upsertTransfer);
   const patchTransfer = useAppStore((state) => state.patchTransfer);
 
@@ -122,13 +124,55 @@ export default function App() {
     return () => dispose();
   }, [patchTransfer, queryClient, setAccount, upsertTransfer]);
 
+  // 兜底同步：事件偶尔会丢，定时从本地数据库合并任务，保证传输中心和角标不落后。
+  useEffect(() => {
+    let active = true;
+    const tick = () => {
+      backend
+        .listTransfers()
+        .then((list) => {
+          if (active) mergeTransfers(list);
+        })
+        .catch(() => undefined);
+    };
+    tick();
+    const timer = window.setInterval(tick, 4000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [mergeTransfers]);
+
+  // 托盘菜单“传输中心”：显示窗口并打开侧栏
+  useEffect(() => {
+    if (!isDesktop) return;
+    let active = true;
+    let dispose: (() => void) | undefined;
+    import("@tauri-apps/api/event")
+      .then(({ listen }) => listen("tray://transfers", () => openTransfers()))
+      .then((unlisten) => {
+        if (active) dispose = unlisten;
+        else unlisten();
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+      dispose?.();
+    };
+  }, [openTransfers]);
+
   useEffect(() => {
     const root = document.documentElement;
-    const dark =
-      settings.theme === "dark" ||
-      (settings.theme === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    root.classList.toggle("dark", dark);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const dark =
+        settings.theme === "dark" ||
+        (settings.theme === "system" && media.matches);
+      root.classList.toggle("dark", dark);
+    };
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
   }, [settings.theme]);
 
   if (loading) return <Splash />;

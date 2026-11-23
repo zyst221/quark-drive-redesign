@@ -1,0 +1,19 @@
+QuarkDrive (redesigned fork)
+============================
+
+This repository is a modified fork of:
+
+  QuarkDrive — https://github.com/xingzhe11011/quark-drive
+  Copyright (c) the upstream contributors
+  Licensed under the MIT License (see LICENSE).
+
+Modifications in this fork: redesigned React frontend, system tray and
+background transfer behaviour, transfer refresh fixes, official icon assets,
+build/packaging changes. See REDESIGN.md for details.
+
+Trademarks
+----------
+"夸克" / "Quark" and the Quark logo are trademarks of their respective
+owners. The official logo included in this repository is used only to
+identify this unofficial client. This project is not affiliated with,
+endorsed by, or sponsored by Quark.

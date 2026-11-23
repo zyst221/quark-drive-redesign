@@ -19,12 +19,12 @@ export function Checkbox({
       onCheckedChange={(value) => onCheckedChange(value === true)}
       aria-label={ariaLabel}
       className={cn(
-        "flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border border-[var(--line)] bg-[var(--panel)] transition data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)]",
+        "flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-[var(--border-strong)] bg-[var(--panel)] transition hover:border-[var(--accent)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)]",
         className,
       )}
     >
       <CheckboxPrimitive.Indicator>
-        <Check className="h-3 w-3 text-white" strokeWidth={3} />
+        <Check className="h-3 w-3 text-[var(--on-accent)]" strokeWidth={3} />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

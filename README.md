@@ -1,24 +1,30 @@
-# QuarkDrive
+# QuarkDrive · 重设计版
 
-夸克网盘 Linux 桌面客户端。扫码登录，支持文件浏览、回收站、上传、下载、断点续传、任务队列、限速设置、深色主题，以及隐私空间解锁、浏览、上传、下载和移动。
+夸克网盘 Linux 桌面客户端。本仓库是 [xingzhe11011/quark-drive](https://github.com/xingzhe11011/quark-drive)（MIT）的界面重设计分支：保留上游 Rust 后端，重做了 React 前端，并加入系统托盘与后台传输。
 
-> 第三方客户端，非夸克官方产品，与夸克官方无任何关联。接口来自夸克网页端，可能随官方更新失效。请只操作自己的账号数据，并保留本地备份。
+> 非官方第三方客户端，与夸克官方无任何关联。接口来自夸克网页端，可能随官方更新失效。请只操作自己的账号数据，并保留本地备份。
 >
 > 本项目仅用于个人账号的文件管理，不绕过会员、限速或付费能力。使用前请自行确认符合夸克服务条款；由此产生的账号或数据风险由使用者承担。
+>
+> 本分支的界面与交互改动见 [REDESIGN.md](REDESIGN.md)。夸克名称与图标归其权利人所有，仓库中的官方图标仅用于标识这个非官方客户端；如你计划再分发，请自行评估商标使用。
 
 ## 功能
 
-- 应用内原生二维码登录，首次登录或会话失效时扫码，不打开夸克网页，也不依赖 WebView 读取 Cookie。
-- 本地会话自动恢复；退出登录或服务端判定失效后才需要重新扫码。
-- 目录浏览、面包屑、搜索、列表/网格视图、多选、新建文件夹、重命名、删除。
-- 回收站：列表、恢复、彻底删除、清空。
-- 上传文件/文件夹，MD5+SHA1 秒传检测，分片上传，失败重试。
-- 下载文件/文件夹，三连接分片下载，直链过期自动刷新，断点续传。
-- 隐私空间：独立密码解锁、分页浏览、文件/文件夹上传与下载、文件和文件夹移动。
-- SQLite 持久化任务，重启后自动恢复。
-- 传输中心：进度、速度、暂停/继续/取消/重试、清理记录。
-- 设置：下载目录、并发数、限速、主题。
-- 备用 Cookie 导入，便于无桌面环境或自动化验收。
+本分支新增：
+
+- 全新应用壳与文件页：面包屑、搜索、可排序列表/网格、悬停操作、多选操作条、状态栏。
+- 传输中心改为右侧面板：上传/下载分页、进度、速度、暂停/继续/重试/取消/移除、清空已完成。
+- 三态主题（跟随系统/浅色/深色），顶栏切换并持久化。
+- 支持把文件/文件夹拖进窗口上传。
+- 系统托盘：关闭窗口隐藏到托盘、后台继续传输；菜单可显示主窗口、打开传输中心、退出；单实例。
+- 官方夸克图标（已做透明圆角处理）。
+
+上游已有、本分支保留：
+
+- 应用内原生二维码登录、本地会话自动恢复、备用 Cookie 导入。
+- 目录浏览、回收站、上传下载、秒传检测、分片上传、三连接分片下载、直链刷新、断点续传。
+- 隐私空间：独立密码解锁、浏览、上传下载、移动、立即锁定。
+- SQLite 持久化任务、任务队列、限速、并发数设置。
 
 ### 隐私空间
 
@@ -30,13 +36,19 @@
 
 ## 界面
 
-| 文件管理 | 回收站 |
+| 文件管理（浅色） | 文件管理（深色） |
 | --- | --- |
-| ![文件管理](docs/screenshots/files.png) | ![回收站](docs/screenshots/recycle.png) |
+| ![文件管理](preview/main.png) | ![深色](preview/dark.png) |
 
-![设置](docs/screenshots/settings.png)
+| 扫码登录 | 网格视图 |
+| --- | --- |
+| ![登录](preview/login.png) | ![网格](preview/grid.png) |
 
-截图来自浏览器演示模式，使用虚构的演示账号与文件数据。
+| 多选操作 | 设置 |
+| --- | --- |
+| ![多选](preview/selection.png) | ![设置](preview/settings.png) |
+
+截图来自浏览器演示模式或登录页，使用虚构的演示账号与文件数据。系统托盘截图见 [preview/tray.png](preview/tray.png)，窗口装饰见 [preview/app-window.png](preview/app-window.png)。
 
 ## 技术栈
 
@@ -57,7 +69,7 @@ quark-drive/
 ├── apps/
 │   ├── desktop/          # React + Tauri 桌面应用
 │   └── cli/              # quark-probe 命令行探针
-├── docs/screenshots/     # 界面截图
+├── preview/              # 重设计界面截图
 └── .github/workflows/    # CI（Rust + 前端）
 ```
 
@@ -114,12 +126,22 @@ npm run dev
 ## 构建
 
 ```bash
-cd apps/desktop
-npm run build
-npm run tauri build -- --bundles deb,appimage
+# 系统依赖（Ubuntu / KDE neon 24.04）
+sudo apt install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev
+
+./build-deb.sh
 ```
 
-产物位于仓库根目录的 `target/release/bundle/`。
+或手动：
+
+```bash
+cd apps/desktop
+npm ci
+npm run build
+npx tauri build --bundles deb
+```
+
+产物位于仓库根目录的 `target/release/bundle/deb/`。托盘功能运行时依赖 `libayatana-appindicator3-1`，deb 已声明该依赖。
 
 如果使用容器或自定义 sysroot，可按需设置：
 
@@ -215,7 +237,8 @@ cargo run -p quark-cli -- --cookie-file cookie.txt download --fid <fid> --output
 
 ## 已知限制
 
-- 未实现分享链接、在线播放、FUSE 挂载、自动同步。
+- 未实现分享链接、在线播放、FUSE 挂载、自动同步；上游后端没有分享与全盘分类接口，本分支未做假功能。
+- 系统托盘使用 libappindicator；个别桌面需要在托盘设置中允许显示。
 - 隐私空间暂不支持删除、回收站、搜索；离开隐私页会取消正在运行的隐私传输。
 - 凭据目前使用 0600 本地文件，尚未接入 Secret Service；生产分发建议换成系统 keyring。
 - 夸克没有公开的个人开发者 OAuth，当前使用网页端 Cookie 接口；接口变更时需要更新 `quark-protocol`。
@@ -233,7 +256,7 @@ cargo run -p quark-cli -- --cookie-file cookie.txt download --fid <fid> --output
 
 ## 开源与许可
 
-- 本项目使用 [MIT License](LICENSE)。
+- 上游项目：[xingzhe11011/quark-drive](https://github.com/xingzhe11011/quark-drive)，MIT License；本分支的修改同样以 MIT 发布，保留上游版权声明，见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
 - 发布二进制时请一并附带 Rust 与 npm 依赖的第三方许可证清单。
-- “夸克”及相关商标归其权利人所有，本项目名称仅用于说明兼容性。
+- “夸克”名称与官方图标归其权利人所有；本仓库仅用于说明兼容性、标识这个非官方客户端，与夸克官方无关联。再分发前请自行确认商标使用边界。
 - 安全问题请按 [SECURITY.md](SECURITY.md) 私下报告，不要公开粘贴真实 Cookie。

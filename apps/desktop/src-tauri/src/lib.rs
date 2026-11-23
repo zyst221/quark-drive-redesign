@@ -1,10 +1,64 @@
 mod commands;
 
 use quark_core::{AppCore, CoreConfig};
-use tauri::{Emitter, Manager};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 
 pub struct AppState {
     pub core: AppCore,
+}
+
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
+    let show = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
+    let transfers = MenuItem::with_id(app, "transfers", "传输中心", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "退出夸克网盘", true, None::<&str>)?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &show,
+            &transfers,
+            &PredefinedMenuItem::separator(app)?,
+            &quit,
+        ],
+    )?;
+
+    let mut builder = TrayIconBuilder::with_id("main-tray")
+        .menu(&menu)
+        .show_menu_on_left_click(true)
+        .tooltip("夸克网盘")
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "show" => show_main(app),
+            "transfers" => {
+                show_main(app);
+                let _ = app.emit("tray://transfers", ());
+            }
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                show_main(tray.app_handle());
+            }
+        });
+    if let Some(icon) = app.default_window_icon() {
+        builder = builder.icon(icon.clone());
+    }
+    builder.build(app)?;
+    Ok(())
 }
 
 pub fn run() {
@@ -16,6 +70,9 @@ pub fn run() {
         .init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            show_main(app);
+        }))
         .setup(|app| {
             let data_dir = app
                 .path()
@@ -37,6 +94,20 @@ pub fn run() {
                     let _ = handle.emit("core://event", event);
                 }
             });
+
+            // 托盘创建成功时，关闭窗口只隐藏，后台继续传输。
+            let tray_ok = setup_tray(app.handle()).is_ok();
+            if tray_ok {
+                if let Some(window) = app.get_webview_window("main") {
+                    let w = window.clone();
+                    window.on_window_event(move |event| {
+                        if let WindowEvent::CloseRequested { api, .. } = event {
+                            api.prevent_close();
+                            let _ = w.hide();
+                        }
+                    });
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

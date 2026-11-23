@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import type { Account, Settings, Transfer } from "./lib/types";
+import { mergeTransferLists } from "./lib/transfers";
 
 export type Page = "files" | "privacy" | "recycle" | "transfers" | "settings";
+export type TransferTab = "upload" | "download";
 export type ViewMode = "list" | "grid";
 
 export interface Crumb {
@@ -15,6 +17,8 @@ interface AppStore {
   dataDir: string;
   transfers: Transfer[];
   page: Page;
+  transfersOpen: boolean;
+  transfersTab: TransferTab;
   viewMode: ViewMode;
   crumbs: Crumb[];
   selection: string[];
@@ -23,6 +27,7 @@ interface AppStore {
   setSettings: (settings: Settings) => void;
   setDataDir: (dataDir: string) => void;
   setTransfers: (transfers: Transfer[]) => void;
+  mergeTransfers: (transfers: Transfer[]) => void;
   upsertTransfer: (transfer: Transfer) => void;
   patchTransfer: (
     id: string,
@@ -30,6 +35,10 @@ interface AppStore {
   ) => void;
   setPage: (page: Page) => void;
   setViewMode: (mode: ViewMode) => void;
+  openTransfers: (tab?: TransferTab) => void;
+  closeTransfers: () => void;
+  toggleTransfers: () => void;
+  setTransfersTab: (tab: TransferTab) => void;
   enterFolder: (fid: string, name: string) => void;
   jumpTo: (index: number) => void;
   setSelection: (selection: string[]) => void;
@@ -52,6 +61,8 @@ export const useAppStore = create<AppStore>((set) => ({
   dataDir: "",
   transfers: [],
   page: "files",
+  transfersOpen: typeof window === "undefined" ? true : window.innerWidth >= 1180,
+  transfersTab: "upload",
   viewMode: "list",
   crumbs: [{ fid: "0", name: "我的网盘" }],
   selection: [],
@@ -60,6 +71,8 @@ export const useAppStore = create<AppStore>((set) => ({
   setSettings: (settings) => set({ settings }),
   setDataDir: (dataDir) => set({ dataDir }),
   setTransfers: (transfers) => set({ transfers }),
+  mergeTransfers: (transfers) =>
+    set((state) => ({ transfers: mergeTransferLists(state.transfers, transfers) })),
   upsertTransfer: (transfer) =>
     set((state) => {
       const exists = state.transfers.some((item) => item.id === transfer.id);
@@ -79,6 +92,14 @@ export const useAppStore = create<AppStore>((set) => ({
     })),
   setPage: (page) => set({ page }),
   setViewMode: (viewMode) => set({ viewMode }),
+  openTransfers: (tab) =>
+    set((state) => ({
+      transfersOpen: true,
+      transfersTab: tab ?? state.transfersTab,
+    })),
+  closeTransfers: () => set({ transfersOpen: false }),
+  toggleTransfers: () => set((state) => ({ transfersOpen: !state.transfersOpen })),
+  setTransfersTab: (transfersTab) => set({ transfersTab }),
   enterFolder: (fid, name) =>
     set((state) => ({
       crumbs: [...state.crumbs, { fid, name }],
